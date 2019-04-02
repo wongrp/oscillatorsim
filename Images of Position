@@ -1,0 +1,108 @@
+from matplotlib import animation
+import matplotlib.pyplot as plt
+import numpy as np
+
+# There are N masses and n = N - 1 springs.
+N = np.linspace(0, 9, 10)
+m_index_N = len(N)-1  # Goes from index 0 to 2 so the Nth index is actually len
+sp_index_n = len(N)-2  # Goes from index 0 to 1 so the nth index is actually len(N)-2
+num_masses = len(N)
+num_springs = len(N) - 1
+
+# parameters
+# for simplicity, all masses are 1 kg, all sp constants are 1, all equilibrium lengths 1 m.
+m = np.ones(num_masses)
+k = np.ones(num_springs)
+L = np.ones(num_springs)
+
+# initial conditions:
+# equilibrium initial lengths, with 1 m/s velocity in spring 0.
+x0 = np.linspace(0, num_masses, num_masses)
+v0 = np.zeros(num_masses)
+v0[0] = 3
+# time interval, in seconds
+t = np.linspace(0, 10, 10000)
+
+
+N_x_arrays = np.zeros((num_masses, len(t)))
+N_v_arrays = np.zeros((num_masses, len(t)))
+
+print(np.shape(N_x_arrays))
+
+
+
+
+# First of the array is initial condition
+for i in range(num_masses):
+    N_x_arrays[i][0] = x0[i]
+    N_v_arrays[i][0] = v0[i]
+
+# The "starting" current positions and velocities arrays
+x_current = x0
+v_current = v0
+
+# ode solving for loop
+# Update x or y current using derivative and time step
+# Then update position arrays with current x
+
+
+for i in range(len(t) - 1):
+    ts = t[i + 1] - t[i]
+    v0d = (k[0] * (x_current[1] - x_current[0] - L[0])) / m[0]
+    vNd = -(k[sp_index_n] * (x_current[m_index_N] - x_current[m_index_N - 1] - L[sp_index_n])) / m[m_index_N]
+
+    x0d = v_current[0]
+    xNd = v_current[m_index_N]
+
+    x_current[0] = x_current[0] + x0d * ts
+    x_current[m_index_N] = x_current[m_index_N] + xNd * ts
+    v_current[0] = v_current[0] + v0d * ts
+    v_current[m_index_N] = v_current[m_index_N] + vNd * ts
+
+    N_x_arrays[0][i + 1] = x_current[0]
+    N_x_arrays[m_index_N][i + 1] = x_current[m_index_N]
+
+    # Middle masses for loop
+    for m_index in range(1, m_index_N):
+        v_interior_d = (-k[m_index-1]*(x_current[m_index] - x_current[m_index - 1] - L[m_index-1])
+                        + k[m_index]*(x_current[m_index+1] - x_current[m_index] - L[m_index])) / m[m_index]
+        x_interior_d = v_current[m_index]
+
+        x_current[m_index] = x_current[m_index] + x_interior_d * ts
+        v_current[m_index] = v_current[m_index] + v_interior_d * ts
+
+        N_x_arrays[m_index][i + 1] = x_current[m_index]
+
+
+# Now we have an array of springs that have positions stored per time step
+# x coordinate is the equilibrium x position of the springs
+# y coordinate is its deviation from the equilibrium position
+# Animate and store images into file
+
+save_counter = [0]
+image_counter = [0]
+
+for time_step in np.arange(0, len(t)-1, 1):
+    plt.cla() # erase the existing plot to start over
+    plt.plot(N_x_arrays[:,0], N_x_arrays[:,time_step],'o')
+    #plt.pause(10**(-9))            # redraw the canvas
+    save_counter[0] = save_counter[0]+1
+    print(save_counter[0])
+    if save_counter[0] == 50:
+        image_counter[0] = image_counter[0]+1
+        plt.savefig('/Users/RyanWong/Desktop/PythonPlots/PythonPlot'+ str(image_counter[0]) + '.png')
+        save_counter[0] = 0
+
+# Potential of Each Mass is made up of kinetic energy and spring potential energy.
+# Kinetic Energy
+N_KE_arrays = np.zeros((num_masses,len(t)))
+
+# Calculate kinetic energy using calculated velocity array
+for i in range(num_masses-1):
+    for time_step in range(len(t)-1):
+        N_KE_arrays[i,time_step] = 0.5 * m[i] * N_v_arrays[i,time_step]**2
+print(N_KE_arrays)
+# Spring Potential Energy
+N_Usp_arrays = np.zeros((num_masses,len(t)))
+# Usp = -k∆x for each spring, which is divided equally between the two masses.
+
