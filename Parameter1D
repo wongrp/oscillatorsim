@@ -1,0 +1,219 @@
+import OneDModel as OneD
+import numpy as np
+import matplotlib as plt
+file_index1 = 'random'
+file_location0 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random0/'
+file_location1 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random1/'
+file_location2 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random2/'
+file_location3 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random3/'
+file_location4 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random4/'
+file_location5 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random5/'
+file_location6 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random6/'
+file_location7 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random7/'
+file_location8 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random8/'
+file_location9 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random9/'
+file_location10 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random10/'
+file_location11 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random11/'
+file_location12 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random12/'
+file_location13 = '/Users/RyanWong/Desktop/1D_Springs/PythonPlots_random13/'
+
+mean_k = 8 #N/m
+num_masses = 61
+num_springs = num_masses - 1
+middle_mass = 31
+
+
+# initial conditions:
+# equilibrium initial lengths, with 1 m/s velocity in spring 0.
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass-1] = 1 #m/s
+# time interval, in seconds
+time_interval = 100 #s
+
+# parameters
+# for simplicity, all masses are 1 kg, all sp constants k are random numbers based on gaussian distribution, all equilibrium lengths 1 m.
+m= np.ones(num_masses)
+L = np.ones(num_springs)
+
+# disorder0 = 0.0
+# k0 = np.random.uniform(2, 2, num_springs)
+# for stiffness in k0:
+#     if stiffness < 0:
+#         stiffness = -stiffness
+
+
+
+disorder1 = 0.1
+k1 = np.random.uniform(mean_k-disorder1, mean_k+disorder1, num_springs)
+for stiffness in k1:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+
+
+disorder2 = 0.2
+k2 = np.random.uniform(mean_k-disorder2, mean_k+disorder2, num_springs)
+for stiffness in k2:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+
+disorder3= 0.3
+k3 = np.random.uniform(mean_k-disorder3, mean_k+disorder3, num_springs)
+for stiffness in k3:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+disorder4= 0.4
+k4 = np.random.uniform(mean_k-disorder4, mean_k+disorder4, num_springs)
+for stiffness in k4:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+
+disorder5= 0.5
+k5 = np.random.uniform(mean_k-disorder5, mean_k+disorder5, num_springs)
+for stiffness in k5:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+disorder6= 0.6
+k6 = np.random.uniform(mean_k-disorder6, mean_k+disorder6, num_springs)
+for stiffness in k6:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+
+disorder7= 0.7
+k7 = np.random.uniform(mean_k-disorder7, mean_k+disorder7, num_springs)
+for stiffness in k7:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+
+disorder8= 0.8
+k8 = np.random.uniform(mean_k-disorder8, mean_k+disorder8, num_springs)
+for stiffness in k8:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+disorder9= 0.9
+k9 = np.random.uniform(mean_k-disorder9, mean_k+disorder9, num_springs)
+for stiffness in k9:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+disorder10= 1.0
+k10 = np.random.uniform(mean_k-disorder10, mean_k+disorder10, num_springs)
+for stiffness in k10:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+disorder11= 1.1
+k11 = np.random.uniform(mean_k-disorder11, mean_k+disorder11, num_springs)
+for stiffness in k11:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+disorder12= 1.2
+k12 = np.random.uniform(mean_k-disorder12, mean_k+disorder12, num_springs)
+for stiffness in k12:
+    if stiffness < 0:
+        stiffness = -stiffness
+
+disorder13= 1.3
+k13 = np.random.uniform(mean_k-disorder13, mean_k+disorder13, num_springs)
+for stiffness in k13:
+    if stiffness < 0:
+        stiffness = -stiffness
+#
+# OneD.Wave(num_masses, m, k0, L, x_init, v_init, time_interval, file_location0, file_index1, disorder0)
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k1, L, x_init, v_init, time_interval, file_location1, file_index1, disorder1)
+
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k2, L, x_init, v_init, time_interval, file_location2, file_index1, disorder2)
+
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k3, L, x_init, v_init, time_interval, file_location3, file_index1, disorder3)
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k4, L, x_init, v_init, time_interval, file_location4, file_index1, disorder4)
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k5, L, x_init, v_init, time_interval, file_location5, file_index1, disorder5)
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k6, L, x_init, v_init, time_interval, file_location6, file_index1, disorder6)
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k7, L, x_init, v_init, time_interval, file_location7, file_index1, disorder7)
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k8, L, x_init, v_init, time_interval, file_location8, file_index1, disorder8)
+
+
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k9, L, x_init, v_init, time_interval, file_location9, file_index1, disorder9)
+
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k10, L, x_init, v_init, time_interval, file_location10, file_index1, disorder10)
+
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k11, L, x_init, v_init, time_interval, file_location11, file_index1, disorder11)
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k12, L, x_init, v_init, time_interval, file_location12, file_index1, disorder12)
+
+#Reset positions and velocities
+x_init = np.linspace(0, num_masses-1, num_masses)
+v_init = np.zeros(num_masses)
+v_init[middle_mass] = 1 #m/s
+OneD.Wave(num_masses, m, k13, L, x_init, v_init, time_interval, file_location13, file_index1, disorder13)
+
+
+
+
+
