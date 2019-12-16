@@ -1,3 +1,2 @@
-# Ryan Wong's URSA Project 2019  
-1D simulation code with parameter entry, position animation and energy heatmap generation. 
-Also present is preliminary 3D code. 
+# A Computational Model for Disordered Solids   
+A 3D simulation of a disordered solid using a particle lattice connected by a harmonic oscillator network with stiffness values chosen from a probability distribution. 
