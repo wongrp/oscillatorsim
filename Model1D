@@ -1,0 +1,159 @@
+from matplotlib import animation
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+
+
+# m is the mass of each mass; 1D array of length num_masses
+# k is the stiffness of each spring; 1D array of length num_springs
+# L is the length of each spring; 1D array of length num_masses
+# x0 is the initial position of each mass; 1D array of length num_masses
+# v0 is the initial velocity of each mass; 1D array of length num_masses
+# time interval is the amount of time you want the simulation to run
+# time_step is the resolution of the time interval.
+
+def Wave(num_masses, m, k, L, x0, v0, time_interval, file_location, file_index, disorder):
+    time_step = 0.001  # = 1 ms
+    # There are N masses and n = N - 1 springs.
+    m_index_N = num_masses - 1  # Goes from index 0 to 2 so the Nth index is actually len
+    sp_index_n = num_masses - 2  # Goes from index 0 to 1 so the nth index is actually len(N)-2
+    t = np.arange(0,time_interval,time_step)
+
+
+    N_x_arrays = np.zeros((num_masses, len(t)))
+    N_v_arrays = np.zeros((num_masses, len(t)))
+
+
+
+    # First of the array is initial condition
+    for i in range(num_masses):
+        N_x_arrays[i][0] = x0[i]
+        N_v_arrays[i][0] = v0[i]
+
+    # The "starting" current positions and velocities arrays
+    x_current = x0
+    v_current = v0
+
+    # ode solving for loop
+    # Update x or y current using derivative and time step
+    # Then update position arrays with current x
+
+    for i in range(len(t) - 1):
+        ts = t[i + 1] - t[i]
+        N_x_arrays[0][:] = x_current[0]
+        N_x_arrays[m_index_N][:] = x_current[m_index_N]
+
+        # Middle masses for loop
+        for m_index in range(1, m_index_N):
+            v_interior_d = (-k[m_index - 1] * (x_current[m_index] - x_current[m_index - 1] - L[m_index - 1])
+                            + k[m_index] * (x_current[m_index + 1] - x_current[m_index] - L[m_index])) / m[m_index]
+            x_interior_d = v_current[m_index]
+
+            x_current[m_index] = x_current[m_index] + x_interior_d * ts
+            v_current[m_index] = v_current[m_index] + v_interior_d * ts
+
+            N_x_arrays[m_index, i + 1] = x_current[m_index]  # this sets the initial condition for the NEXT iteration, hence the i+1
+            N_v_arrays[m_index, i + 1] = v_current[m_index]
+
+
+    plt.figure()
+    plt.title('Mass Position over Time')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Position (m)')
+    for i in range(num_masses):
+        plt.plot(t, N_x_arrays[i], color = 'red')
+        plt.savefig(file_location+'Mass_Positions')
+    # Now we have an array of springs that have positions stored per time step
+    # x coordinate is the equilibrium x position of the springs
+    # y coordinate is its deviation from the equilibrium position
+    # Animate and store images into file
+
+    save_counter = [0]
+    image_counter = [0]
+    print('First mass starts out at ' , N_x_arrays[0,0])
+    #average k value of each mass is the average of the stiffness of the springs connecting them.
+    average_k_of_m = np.zeros(num_masses - 1)
+    for i in range(1, num_masses - 2):
+        average_k_of_m[i] = 0.5 * (k[i - 1] + k[i])
+
+    for time_step in np.arange(0, len(t) - 1, 1):
+        plt.cla()  # erase the existing plot to start over
+        plt.scatter(N_x_arrays[0:-1, 0], N_x_arrays[0:-1, time_step] - N_x_arrays[0:-1, 0], c=average_k_of_m)
+
+        plt.ylim(-10*v0[1], 10*v0[1])
+        save_counter[0] = save_counter[0] + 1
+        if save_counter[0] == 100:
+            image_counter[0] = image_counter[0] + 1
+            plt.savefig(file_location + 'Animation_'+file_index + '/PythonPlot_' + file_index + str(image_counter[0]) + '.png')
+            save_counter[0] = 0
+
+    # Potential of Each Mass is made up of kinetic energy and spring potential energy.
+    # Kinetic Energy
+    N_KE_arrays = np.zeros((num_masses,len(t)))
+
+    # Calculate kinetic energy using calculated velocity array
+    for i in range(num_masses):
+        for ts in range(len(t)-1):
+            N_KE_arrays[i ,ts] = 0.5 * m[i] * N_v_arrays[i,ts]**2
+
+    # Spring Potential Energy Array
+    N_U_arrays = np.zeros((num_masses,len(t)))
+
+    for ts in range(len(t)-1):
+        N_U_arrays[m_index_N, ts] = 0.25*k[sp_index_n]*(N_x_arrays[m_index_N, ts]-N_x_arrays[m_index_N-1, ts]-L[sp_index_n])**2
+        N_U_arrays[0, ts] = 0.25*k[0]*(N_x_arrays[1, ts]-N_x_arrays[0, ts]-L[0])**2
+
+        for i in range(1, m_index_N):
+            N_U_arrays[i, ts] = (0.25)*k[i]*(N_x_arrays[i+1, ts]-N_x_arrays[i, ts]-L[i])**2 + \
+                                       (0.25)*k[i-1]*(N_x_arrays[i, ts]-N_x_arrays[i-1, ts]-L[i-1])**2
+
+
+    avg_v_small = 0
+    avg_v_time = 0
+    avg_v_large = 0
+    for i in range(len(t)):
+        if N_KE_arrays[1,i] > 0:
+            avg_v_large = (num_masses/2-1)/(i*0.001)
+            avg_v_time = i
+            break
+    for i in range(avg_v_time, len(t)):
+        if N_KE_arrays[0,i] == 0:
+            avg_v_small = (num_masses/2-1)/(i*0.001)
+            break
+
+    print('average velocity when disorder is', str(disorder), ' ranges from ' , str(avg_v_small), ' m/s to ', str(avg_v_large), ' m/s ')
+
+    # color maps for potential and kinetic energy
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(211)
+    KE_plot = ax1.matshow(np.sqrt(N_KE_arrays), aspect='auto', extent=[0, t[-1], 0, num_masses], origin='lower')
+    plt.gca().xaxis.tick_bottom()  # switches x-axis from top to bottom
+    plt.title("Kinetic Energy(J)")
+    plt.ylabel("Position (m)")
+    plt.xlabel("Time (s)")
+    # ax1.legend(['average velocity:'+ str() + 'm/s'])
+    plt.colorbar(KE_plot, label = '\u221A Energy (\u221AJ)')
+
+
+    plt.subplots_adjust(hspace=1)  # separates the subplots
+
+    ax2 = fig.add_subplot(212)
+    U_plot = ax2.matshow(np.sqrt(N_U_arrays), aspect='auto', extent=[0, t[-1], 0, num_masses], origin='lower')
+    plt.gca().xaxis.tick_bottom()  # switches x-axis from top to bottom
+    plt.colorbar(U_plot, label = '\u221A Energy (\u221AJ)')
+    plt.title("Potential Energy (J)")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Position(m)")
+
+    plt.show()
+    plt.savefig(file_location+'EnergyMap')
+
+
+
+
+
+
+
+
+
