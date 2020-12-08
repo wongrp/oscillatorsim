@@ -1,0 +1,1 @@
+{'highval': 1.0, 'lowval': 2.0, 'numlayers': 2, 'average k value': 1.5, 'average velocity': 1.0453976128820908, 'standard deviation velocity': 0.03267661814371741}

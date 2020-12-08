@@ -1,0 +1,6 @@
+time interval: 6.0 s
+average stiffness = 1.0N/m
+average particle mass = 1.0kg
+total mass = 1275.0kg
+linear damping constant = 0.0 * 2.0 = 0.0
+corner mass initial speed = 30.0m/s

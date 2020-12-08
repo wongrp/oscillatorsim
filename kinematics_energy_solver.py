@@ -8,11 +8,11 @@ import numpy as np
 # Initial Position, Velocity, Acceleration Matrices Initializer  #
 ###################################################################################################
 # Processes initial conditions and inserts them into an array with a time dimension, separated by direction
-def initialize_kinematics(T, n, Pos_init, A_init, V_init):
+def initialize_kinematics(T, n, nz, Pos_init, A_init, V_init):
 
-    Pos_x, Pos_y, Pos_z = np.zeros((np.shape(T)[0], n, n, n)), np.zeros((np.shape(T)[0], n, n, n)), np.zeros((np.shape(T)[0], n, n, n))
-    A_x, A_y, A_z = np.zeros((np.shape(T)[0], n-2, n-2, n-2)), np.zeros((np.shape(T)[0], n-2, n-2, n-2)), np.zeros((np.shape(T)[0], n-2, n-2, n-2))
-    V_x, V_y, V_z = np.zeros((np.shape(T)[0], n-2, n-2, n-2)), np.zeros((np.shape(T)[0], n-2, n-2, n-2)), np.zeros((np.shape(T)[0], n-2, n-2, n-2))
+    Pos_x, Pos_y, Pos_z = np.zeros((np.shape(T)[0], nz, n, n)), np.zeros((np.shape(T)[0], nz, n, n)), np.zeros((np.shape(T)[0], nz, n, n))
+    A_x, A_y, A_z = np.zeros((np.shape(T)[0], nz-2, n-2, n-2)), np.zeros((np.shape(T)[0], nz-2, n-2, n-2)), np.zeros((np.shape(T)[0], nz-2, n-2, n-2))
+    V_x, V_y, V_z = np.zeros((np.shape(T)[0], nz-2, n-2, n-2)), np.zeros((np.shape(T)[0], nz-2, n-2, n-2)), np.zeros((np.shape(T)[0], nz-2, n-2, n-2))
 
     Pos_x[:], Pos_y[:], Pos_z[:] = Pos_init[0],Pos_init[1],Pos_init[2]
     A_x[0], A_y[0], A_z[0] = A_init[0], A_init[1], A_init[2] #Set initial accelerations and velocities
@@ -107,7 +107,7 @@ def net_force_calculator(Pos_init, V_init, damping_constant, k,L0_l, L0_c, L0_e,
         length_deviation_yp, force_yp_x, force_yp_y, force_yp_z = hookes_force_solver(particle, particle_yp, L0_l, k_yp)
         length_deviation_yn, force_yn_x, force_yn_y, force_yn_z = hookes_force_solver(particle, particle_yn, L0_l, k_yn)
         length_deviation_zp, force_zp_x, force_zp_y, force_zp_z = hookes_force_solver(particle, particle_zp, L0_l, k_zp)
-        length_deviation_zn, force_zn_x, force_zn_y, force_zn_z = hookes_force_solver(particle, particle_xp, L0_l, k_zn)
+        length_deviation_zn, force_zn_x, force_zn_y, force_zn_z = hookes_force_solver(particle, particle_zn, L0_l, k_zn)
 
         # 12 edge
         length_deviation_xp_yp, force_xp_yp_x , force_xp_yp_y , force_xp_yp_z  = hookes_force_solver(particle, particle_xp_yp , L0_e, k_xp_yp)
@@ -142,28 +142,28 @@ def net_force_calculator(Pos_init, V_init, damping_constant, k,L0_l, L0_c, L0_e,
           = hookes_force_solver(particle, particle_xn_yn_zn , L0_c, k_xn_yn_zn)
 
         # Calculate hookes force
-        F_x_net_hookes = force_xp_x + force_xn_x + force_yp_x + force_yn_x + force_yn_x \
+        F_x_net_hookes = force_xp_x + force_xn_x + force_yp_x + force_yn_x  \
         + force_zp_x + force_zn_x + force_xp_yp_x + force_xp_yn_x + force_xp_zp_x + \
         force_xp_zn_x + force_xn_yp_x + force_xn_yn_x + force_xn_zp_x + force_xn_zn_x + \
         force_yp_zp_x + force_yp_zn_x + force_yn_zp_x + force_yn_zn_x + force_xp_yp_zp_x + \
         force_xp_yp_zn_x + force_xp_yn_zp_x + force_xp_yn_zn_x + force_xn_yp_zp_x + force_xn_yp_zn_x + \
         force_xn_yn_zp_x + force_xn_yn_zn_x
 
-        F_y_net_hookes = force_xp_y + force_xn_y + force_yp_y + force_yn_y + force_yn_y \
+        F_y_net_hookes = force_xp_y + force_xn_y + force_yp_y + force_yn_y \
         + force_zp_y + force_zn_y + force_xp_yp_y + force_xp_yn_y + force_xp_zp_y + \
         force_xp_zn_y + force_xn_yp_y + force_xn_yn_y + force_xn_zp_y + force_xn_zn_y + \
         force_yp_zp_y + force_yp_zn_y + force_yn_zp_y + force_yn_zn_y + force_xp_yp_zp_y + \
         force_xp_yp_zn_y + force_xp_yn_zp_y + force_xp_yn_zn_y + force_xn_yp_zp_y + force_xn_yp_zn_y + \
         force_xn_yn_zp_y + force_xn_yn_zn_y
 
-        F_z_net_hookes = force_xp_z + force_xn_z + force_yp_z + force_yn_z + force_yn_z \
+        F_z_net_hookes = force_xp_z + force_xn_z + force_yp_z + force_yn_z \
         + force_zp_z + force_zn_z + force_xp_yp_z + force_xp_yn_z + force_xp_zp_z + \
         force_xp_zn_z + force_xn_yp_z + force_xn_yn_z + force_xn_zp_z + force_xn_zn_z + \
         force_yp_zp_z + force_yp_zn_z + force_yn_zp_z + force_yn_zn_z + force_xp_yp_zp_z + \
         force_xp_yp_zn_z + force_xp_yn_zp_z + force_xp_yn_zn_z + force_xn_yp_zp_z + force_xn_yp_zn_z + \
         force_xn_yn_zp_z + force_xn_yn_zn_z
 
-        # Calculate damping forcer
+        # Calculate damping force
         F_x_net_damping = -((damping_constant*V_init[0]))
         F_y_net_damping = -((damping_constant*V_init[1]))
         F_z_net_damping = -((damping_constant*V_init[2]))
@@ -184,9 +184,22 @@ def net_force_calculator(Pos_init, V_init, damping_constant, k,L0_l, L0_c, L0_e,
 # Kinamtics Calculator
 ###################################################################################################
 
-def kinematics_calculator(Pos_init, A_init, V_init, k, n, L0_l, L0_c, L0_e, M, T, damping_constant):
+def kinematics_calculator(Pos_init, A_init, V_init, k, n, nz,  L0_l, L0_c, L0_e, M, T, damping_constant):
 
-    Pos_x, Pos_y, Pos_z, A_x, A_y, A_z, V_x, V_y, V_z = initialize_kinematics(T, n, Pos_init, A_init, V_init)
+    Pos_x, Pos_y, Pos_z, A_x, A_y, A_z, V_x, V_y, V_z = initialize_kinematics(T, n, nz, Pos_init, A_init, V_init)
+
+    # Package into A, V, Pos. The purpose of this 'redundant' step is to make implementing
+    # verlet integration easier.
+    A = np.zeros((np.shape(A_x)[0], 3, np.shape(A_x)[1], np.shape(A_x)[2], np.shape(A_x)[3]))
+    V = np.zeros(np.shape(A))
+    P = np.zeros((np.shape(A)[0],np.shape(A)[1],np.shape(A)[2]+2,np.shape(A)[3]+2, np.shape(A)[3]+2))
+    for i in range(len(A_x)):
+        A[i] = A_x[i], A_y[i], A_z[i]
+        V[i] = V_x[i], V_y[i], V_z[i]
+        P[i] = Pos_x[i], Pos_y[i], Pos_z[i]
+    print('A shape: ', np.shape(A))
+    print('V shape: ', np.shape(V))
+    print('P shape: ', np.shape(P))
 
     # Initiate total energy array, ke array
     total_energy = np.zeros((np.shape(V_x)))
@@ -194,43 +207,39 @@ def kinematics_calculator(Pos_init, A_init, V_init, k, n, L0_l, L0_c, L0_e, M, T
     ke_array = np.zeros((np.shape(total_energy)))
 
     # dt
+    # here, A[t+2] is akin to A(t + dt) if we define step sizes as 0.005 in the time interval array.
     dt = T[1]-T[0]
-
     for t in range(len(T)-1):
         if T[t]%0.5 == 0:
             print('time: ',  T[t])
+        m = np.array((M[1:-1, 1:-1, 1:-1],M[1:-1, 1:-1, 1:-1],M[1:-1, 1:-1, 1:-1])) # FIXME... there's a simpler way to do this that requires fixing other scripts.
 
-        F_x_net, F_y_net, F_z_net, length_deviation_list = net_force_calculator(Pos_init, V_init, damping_constant, k,L0_l, L0_c, L0_e, M)
+        # Velocity Verlet Integration
+        #Calculate Position
+        P[t+1] = P[t]
+        P[t+1,:,1:-1,1:-1,1:-1] += V[t]*dt+0.5*A[t]*(dt**2)
 
+        # Calculate Acceleration from interaction potential
+        # first package full step positions and half step velocities
+        Pos_next = np.array((P[t+1,0], P[t+1,1],P[t+1,2])) #FIXME, complicates things.
+        V_next = np.array((V[t+1,0], V[t+1,1],V[t+1,2])) #FIXME as well.
+        # then calculate net force and package
+        F_x_net, F_y_net, F_z_net, length_deviation_list = net_force_calculator(Pos_next, V_next, damping_constant, k,L0_l, L0_c, L0_e, M)
+        F = np.zeros((3, np.shape(F_x_net)[0],np.shape(F_x_net)[1],np.shape(F_x_net)[2]))
+        F[0] = F_x_net
+        F[1] = F_y_net
+        F[2] = F_z_net
         # Calculate Acceleration
-        A_x[t+1] = F_x_net * 1 / (M[1:-1, 1:-1, 1:-1])
-        A_y[t+1] = F_y_net * 1 / (M[1:-1, 1:-1, 1:-1])
-        A_z[t+1] = F_z_net * 1 / (M[1:-1, 1:-1, 1:-1])
-
+        A[t+1] = F/m
 
         # Calculate Velocity
-        V_x[t+1] = V_x[t] + A_x[t] * dt
-        V_y[t+1] = V_y[t] + A_y[t] * dt
-        V_z[t+1] = V_z[t] + A_z[t] * dt
-
-
-        #Calculate Position
-        Pos_x[t+1] = Pos_x[t]
-        Pos_y[t+1] = Pos_y[t]
-        Pos_z[t+1] = Pos_z[t]
-
-
-
-        Pos_x[t+1,1:-1,1:-1,1:-1] += (V_x[t]+V_x[t+1])/2 * dt
-        Pos_y[t+1,1:-1,1:-1,1:-1] += (V_y[t]+V_y[t+1])/2 * dt
-        Pos_z[t+1,1:-1,1:-1,1:-1] += (V_z[t]+V_z[t+1])/2 * dt
-
+        V[t+1] = V[t] + 0.5*(A[t]+A[t+1])*dt
 
         ########################################################################
         #Update energies of each mass as matrices#
         ########################################################################
         #Update Kinetic Energy
-        ke = calculate_kinetic_energy(M, V_x[t], V_y[t], V_z[t])
+        ke = calculate_kinetic_energy(M, V[t,0], V[t,1], V[t,2])
         #Update Potential Energy
         pe = calculate_potential_energy(k, length_deviation_list)
 
@@ -240,14 +249,47 @@ def kinematics_calculator(Pos_init, A_init, V_init, k, n, L0_l, L0_c, L0_e, M, T
         ke_array[t] = ke
 
         # Update Pos_init
-        Pos_init = np.array((Pos_x[t], Pos_y[t],Pos_z[t]))
-        V_init = np.array((V_x[t], V_y[t],V_z[t]))
+        Pos_init = np.array((P[t,0], P[t,1],P[t,2]))
+        V_init = np.array((V[t,0], V[t,1],V[t,2]))
+
+    ########################################################################
+    #Collapse the matrices into 1D for 3D plot of wave propagation#
+    ########################################################################
+    # print(np.shape(total_energy))
+    # total_energy_1d = np.sum(total_energy, axis = 3)
+    # print(np.shape(total_energy_1d))
+    # total_energy_1d = np.sum(total_energy_1d, axis = 2)
+
+    total_energy_1d_z = np.zeros((np.shape(total_energy)[0], np.shape(total_energy)[1]))
+    total_energy_1d_y = np.zeros((np.shape(total_energy)[0], np.shape(total_energy)[2]))
+    total_energy_1d_x = np.zeros((np.shape(total_energy)[0], np.shape(total_energy)[3]))
+
+    for i in range(len(total_energy_1d_z)):
+        energy_1d_z = np.sum(total_energy[i], axis = 2)
+        energy_1d_z = np.sum(energy_1d_z, axis = 1)
+        energy_1d_x = np.sum(total_energy[i], axis = 0)
+        energy_1d_x = np.sum(total_energy[i], axis = 1)
+        energy_1d_y = np.sum(total_energy[i], axis = 0)
+        energy_1d_y = np.sum(total_energy[i], axis = 1)
+        total_energy_1d_z[i] = energy_1d_z
 
 
     ############################################################################
     # OUTPUTS #
     ############################################################################
+    # reexpand A, V, P Matrices
+    for t in range(len(A)):
+        A_x[t] = A[t,0]
+        A_y[t] = A[t,1]
+        A_z[t] = A[t,2]
+        V_x[t] = V[t,0]
+        V_y[t] = V[t,1]
+        V_z[t] = V[t,2]
+        Pos_x[t] = P[t,0]
+        Pos_y[t] = P[t,1]
+        Pos_z[t] = P[t,2]
+
     # Pack kinematics matrices
     cartesian_kinematics_matrices = [Pos_x, Pos_y, Pos_z, A_x, A_y, A_z, V_x, V_y, V_z]
 
-    return cartesian_kinematics_matrices, total_energy, pe_array, ke_array
+    return cartesian_kinematics_matrices, total_energy, pe_array, ke_array,total_energy_1d_z, total_energy_1d_y, total_energy_1d_x

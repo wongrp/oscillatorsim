@@ -17,5 +17,5 @@ def calculate_potential_energy(k, dL_list):
         pe = (np.multiply(k[i],np.power(dL_list[i],2)))/4
         pe_list.append(pe)
     pe_total = np.sum(pe_list, axis = 0) # keep interior matrix structure
-  
+
     return pe_total

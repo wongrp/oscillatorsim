@@ -6,13 +6,13 @@ from stiffness_patterns import *
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d, Axes3D
-import cv2
 import os
 import matplotlib.animation as animation
 from matplotlib import colors, cm
 import json
 import os, getopt, sys
 
+# clarification: for kinematics matrices, dimension is (z,y,x)
 def usage():
     script = os.path.basename(__file__)
     print("\n\nUsage:  " + script + " [options] <output directory>")
@@ -23,20 +23,22 @@ def usage():
                     -t --timelimit (seconds)
                     -s --massperturbed (mass given a velocity, default is the middle mass on the xy plane)
                     -v --initialvelocity (initial velocity; e.g. 3)
-                    -n --rows (number of particles in a row; e.g. 10)
+                    -n --nxyplane (number of particles in a row; e.g. 10)
+                    -z --nz (number of particles in a row; e.g. 10)
                     -f --fileindex (for mass experiments)
                     -e --eqlength (longitudinal; meters)
                     -l --numlayers (k value)
                     -i --highval (for k value )
                     -j --lowval (for k value)
                     -p --dampingthreshold (a weight value on critical linear damping constant)
+                    -a --animation
                     <folder directory> (e.g. 3D_Wave_Data)
 
                     ''')
     sys.exit()
 
 def main():
-    opts, files = getopt.getopt(sys.argv[1:], "h:d:t:s:v:n:f:e:l:i:j:p:", [ "help", "date", "timelimit", "massperturbed", "initialvelocity", "rows", "fileindex", "eqlength", "numlayers" , "highval", "lowval", "dampingthreshold"])
+    opts, files = getopt.getopt(sys.argv[1:], "h:d:t:s:v:n:z:f:e:l:i:j:p:a:", [ "help", "date", "timelimit", "massperturbed", "initialvelocity", "nxyplane","nz", "fileindex", "eqlength", "numlayers" , "highval", "lowval", "dampingthreshold", "anim"])
 
     if len(files) != 1:
         usage()
@@ -46,6 +48,7 @@ def main():
     parameters['d'] = 'nodate_'
     parameters['t'] = 5
     parameters['n'] = 3
+    parameters['z'] = 3
     parameters['s'] = [0,0,0]
     parameters['v'] = 0
     parameters['f'] = 0
@@ -54,6 +57,7 @@ def main():
     parameters['i'] = 1
     parameters['j'] = 1
     parameters['p'] = 1
+    parameters['a'] = 0 # by default, do not animate.
 
     # loop over options:
     for option, argument in opts:
@@ -67,8 +71,10 @@ def main():
             parameters['s'] = argument
         elif option in ("-v", "--initialvelocity"):
             parameters['v'] = argument
-        elif option in ("-n", "--rows"):
+        elif option in ("-n", "--nxyplane"):
             parameters['n'] = argument
+        elif option in ("-z", "--nz"):
+            parameters['z'] = argument
         elif option in ("-f", "--fileindex"):
             parameters['f'] = argument
         elif option in ("-e", "--eqlength"):
@@ -81,6 +87,8 @@ def main():
             parameters['j'] = argument
         elif option in ("-p", "--dampingthreshold"):
             parameters['p'] = argument
+        elif option in ("-a", "--animation"):
+            parameters['a'] = argument
 
     base = os.path.basename(files[0])
     input_video_name, input_video_extension = os.path.splitext(base)
@@ -90,76 +98,134 @@ def main():
     date = parameters['d']
     time_limit = float(parameters['t'])
     initial_velocity = float(parameters['v']) # in m/s
-    n = int(parameters['n'])
+    n = int(parameters['n']) + 2
+    nz = int(parameters['z']) + 2
     file_index = parameters['f']
     L0_l = float(parameters['e'])
     num_layers = int(parameters['l'])
     high_val = float(parameters['i'])
     low_val = float(parameters['j'])
     damping_threshold = float(parameters['p'])
+    anim = int(parameters['a'])
+
     # set file paths
     folder_dir = files[0]
 
 
     # set up mass spring system
-    L0_e, L0_c, Pos_init, M, A_init, V_init, k, damping_constant_critical = mss(n, L0_l)
+    L0_e, L0_c, Pos_init, M, A_init, V_init, k, damping_constant_critical = mss(n,nz, L0_l)
+    # produce disorder
     k,  k_avg_val = z_layers(k, num_layers, low_val, high_val)
 
     # set initial conditions
-    time_interval = np.arange(0, time_limit, 0.01) #s
+    time_interval = np.arange(0, time_limit, 0.0005) #s
     damping_constant = damping_constant_critical * damping_threshold
-    start_position =  [0,int(n/2-1.5),int(n/2-1.5)] # middle mass, xy plane.
+    # start_position =  [int(nz/2-0.5),int(n/2-0.5),int(n/2-0.5)] # z, y, x
+    start_position =  [0,0,0] # z, y, x
 
+    # if len(start_position) == 1:
+    #     V_init[2,start_position[0]] = initial_velocity # z, hard coded direction for now...
+    # elif len(start_position) == 2:
+    #     V_init[2,start_position[0], start_position[1]] = initial_velocity # z, hard coded direction for now...
+    # elif len(start_position) == 3:
+    #     V_init[2,start_position[0], start_position[1], start_position[2]] = initial_velocity # z, hard coded direction for now...
+
+    # ### temporarily switched to initial acceleration ### #
     if len(start_position) == 1:
-        V_init[2,start_position[0]] = initial_velocity # z, hard coded direction for now...
+        A_init[2,start_position[0]] = initial_velocity # z, hard coded direction for now...
     elif len(start_position) == 2:
-        V_init[2,start_position[0], start_position[1]] = initial_velocity # z, hard coded direction for now...
+        A_init[2,start_position[0], start_position[1]] = initial_velocity # z, hard coded direction for now...
     elif len(start_position) == 3:
-        V_init[2,start_position[0], start_position[1], start_position[2]] = initial_velocity # z, hard coded direction for now...
+        A_init[2,start_position[0], start_position[1], start_position[2]] = initial_velocity # z, hard coded direction for now...
+
     ###################################################################################################
     # Calculate position and energy propagation #
     ###################################################################################################
     # Pos_x, Pos_y, Pos_z, A_x, A_y, A_z, V_x, V_y, V_z, total_energy =  \
-    cartesian_kinematics_matrices, total_energy, pe_array, ke_array = kinematics_calculator(Pos_init, A_init, V_init, k, n, L0_l, L0_c, L0_e, M, time_interval, damping_constant)
+    cartesian_kinematics_matrices, total_energy, pe_array, ke_array,total_energy_1d_z, total_energy_1d_y, total_energy_1d_x = kinematics_calculator(Pos_init, A_init, V_init, k, n, nz, L0_l, L0_c, L0_e, M, time_interval, damping_constant)
     Pos_x, Pos_y, Pos_z, A_x, A_y, A_z, V_x, V_y, V_z = cartesian_kinematics_matrices
+
+    ###################################################################################################
+    # Write cartesian_kinematics matrices, total energy, ke and pe array into text file  #
+    ###################################################################################################
+
+    str1 = str(cartesian_kinematics_matrices)
+    str2 = str(total_energy)
+    str3 = str(ke_array)
+    str4 = str(pe_array)
+
+    ckm_text  = open(folder_dir+"cartesian_kinematics_matrices" + str(file_index) + ".txt", "w+" )
+    ckm_text.writelines(str1)
+    energy_text  = open(folder_dir+"total_energy" + str(file_index) + ".txt", "w+" )
+    energy_text.writelines(str2)
+    ke_text  = open(folder_dir+"ke" + str(file_index) + ".txt", "w+" )
+    ke_text.writelines(str3)
+    pe_text  = open(folder_dir+"pe" + str(file_index) + ".txt", "w+" )
+    pe_text.writelines(str4)
+
+    ###################################################################################################
+    # Plot 1D spring trajectory for simulating a few springs #
+    ###################################################################################################
+    fig, ax = plt.subplots()
+    plt.title('Particle trajectories in z direction')
+    plt.xlabel('time (s)')
+    plt.ylabel('position (m)')
+    z_plot = Pos_z[:, 1:-1, 1:-1, 1:-1]
+    for i in range(len(z_plot[0])):
+        for j in range(len(z_plot[0,i])):
+            for k in range(len(z_plot[0,i,j])):
+                color=(np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1))
+                ax.plot(time_interval, z_plot[:,i,j,k], 'o', color = color)
+
+    # fig, ax = plt.subplots()
+    # for t in range(len(z_plot)):
+    #     for i in range(len(z_plot[t])):
+    #         for j in range(len(z_plot[t,i])):
+    #             for k in range(len(z_plot[t, i,j])):
+    #                 ax.plot(time_interval[t],z_plot[t,i,j,k], linewidth=3, markersize = 3)
+
+
+
+    plt.savefig(folder_dir + 'z_trajectories.png')
+
 
     ###################################################################################################
     # Plot Kinematics Plot (Movie) #
     ###################################################################################################
+    if anim == 1:
+        x_plot = Pos_x[:, 1:-1, 1:-1, 1:-1]
+        y_plot = Pos_y[:, 1:-1, 1:-1, 1:-1]
+        z_plot = Pos_z[:, 1:-1, 1:-1, 1:-1]
 
-    x_plot = Pos_x[:, 1:-1, 1:-1, 1:-1]
-    y_plot = Pos_y[:, 1:-1, 1:-1, 1:-1]
-    z_plot = Pos_z[:, 1:-1, 1:-1, 1:-1]
-
-    fps = 20
-    frames = np.arange(0, len(time_interval), fps)
-    fig = plt.figure()
-    ax = Axes3D(fig)
-
-
-    def update(ts, x, y, z, total_energy):
-        fig.clear()
+        fps = 20
+        frames = np.arange(0, len(time_interval), fps)
+        fig = plt.figure()
         ax = Axes3D(fig)
-        # ax.cla()
-        ax.set_xlim3d(0, (n)*L0_l)
-        ax.set_ylim3d(0, (n)*L0_l)
-        ax.set_zlim3d(0, (n)*L0_l)
-        ax.set_xlabel('x position (m)', rotation=150)
-        ax.set_ylabel('y position (m)')
-        ax.set_zlabel('z position (m)', rotation=60)
-        plt.title('Time = ' + str(time_interval[ts]) + ' s')
-        plot = ax.scatter(x[ts],y[ts],z[ts], c = pe_array[ts].ravel(),cmap = plt.cm.hot)
-        #the add axes gives parameters to adjust [left, bottom, width, height]
-        norm = colors.Normalize(vmin=0.,vmax=1.2*np.max(pe_array))
-        mappable = cm.ScalarMappable(norm=norm, cmap = plt.cm.hot)
-        mappable.set_array(plot)
-        cb = fig.colorbar(mappable, cax = fig.add_axes([0.1, 0.4, 0.01, 0.3]))
 
 
-    writer = animation.FFMpegWriter(fps = fps)
-    ani = animation.FuncAnimation(fig, update, frames, fargs = (x_plot, y_plot, z_plot, total_energy))
+        def update(ts, x, y, z, total_energy):
+            fig.clear()
+            ax = Axes3D(fig)
+            # ax.cla()
+            ax.set_xlim3d(0, (n)*L0_l)
+            ax.set_ylim3d(0, (n)*L0_l)
+            ax.set_zlim3d(0, (n_z)*L0_l)
+            ax.set_xlabel('x position (m)', rotation=150)
+            ax.set_ylabel('y position (m)')
+            ax.set_zlabel('z position (m)', rotation=60)
+            plt.title('Time = ' + str(time_interval[ts]) + ' s')
+            plot = ax.scatter(x[ts],y[ts],z[ts], c = pe_array[ts].ravel(),cmap = plt.cm.hot)
+            #the add axes gives parameters to adjust [left, bottom, width, height]
+            norm = colors.Normalize(vmin=0.,vmax=1.2*np.max(pe_array))
+            mappable = cm.ScalarMappable(norm=norm, cmap = plt.cm.hot)
+            mappable.set_array(plot)
+            cb = fig.colorbar(mappable, cax = fig.add_axes([0.1, 0.4, 0.01, 0.3]))
 
-    ani.save(folder_dir + 'mss_timeplot_' + date + '.mp4', writer= writer)
+
+        writer = animation.FFMpegWriter(fps = fps)
+        ani = animation.FuncAnimation(fig, update, frames, fargs = (x_plot, y_plot, z_plot, total_energy))
+
+        ani.save(folder_dir + 'mss_timeplot_' + date + '.mp4', writer= writer)
 
     ###################################################################################################
     # track waves and write velocity to text file#
@@ -232,55 +298,97 @@ def main():
 
 
     ###################################################################################################
-    # Global energy plots #
+    # Plot energy of the system as a fn of time #
     ###################################################################################################
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2)
+    # fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2)
+    fig, (ax1, ax2) = plt.subplots(2,1)
     # create arrays
     ke_sum = np.zeros((len(time_interval)-1))
     pe_sum = np.zeros((len(time_interval)-1))
-    ke_max = np.zeros((len(time_interval)-1))
-    pe_max = np.zeros((len(time_interval)-1))
+    # ke_max = np.zeros((len(time_interval)-1))
+    # pe_max = np.zeros((len(time_interval)-1))
     for ts in range(len(time_interval)-1):
         ke_sum[ts] =  np.sum(ke_array[ts])
         pe_sum[ts] =  np.sum(pe_array[ts])
-        ke_max[ts] =  np.max(ke_array[ts])
-        pe_max[ts] =  np.max(pe_array[ts])
+        # ke_max[ts] =  np.max(ke_array[ts])
+        # pe_max[ts] =  np.max(pe_array[ts])
 
     ax1.set_xlabel('time (s)')
     ax1.set_ylabel('energy (J)')
     ax2.set_xlabel('time (s)')
     ax2.set_ylabel('energy (J)')
-    ax3.set_xlabel('time (s)')
-    ax3.set_ylabel('energy (J)')
-    ax4.set_xlabel('time (s)')
-    ax4.set_ylabel('energy (J)')
+    # ax3.set_xlabel('time (s)')
+    # ax3.set_ylabel('energy (J)')
+    # ax4.set_xlabel('time (s)')
+    # ax4.set_ylabel('energy (J)')
 
-    plt.subplots_adjust(wspace = 0.4, hspace = 0.4)
+    plt.subplots_adjust(wspace = 0.4, hspace = 0.6)
 
     ax1.plot(time_interval[:-1], ke_sum)
     ax2.plot(time_interval[:-1], pe_sum)
-    ax3.plot(time_interval[:-1], ke_max)
-    ax4.plot(time_interval[:-1], pe_max)
+    # ax3.plot(time_interval[:-1], ke_max)
+    # ax4.plot(time_interval[:-1], pe_max)
 
     ax1.set_title('total kinetic energy')
     ax2.set_title('total potential energy')
-    ax3.set_title('max kinetic energy ')
-    ax4.set_title('max potential energy')
+    # ax3.set_title('max kinetic energy ')
+    # ax4.set_title('max potential energy')
 
 
     plt.savefig(folder_dir + 'energy_plot_'+ date + '.png')
 
+
     ###################################################################################################
-    # parameter and hyper parameter tables  #
+    # Plot the 1D projection of energy propagation in the z direction. #
+    ###################################################################################################
+    fig = plt.figure()
+    ax1 = fig.add_subplot(211)
+    wave_prop_plot = ax1.matshow(np.transpose(total_energy_1d_z), aspect='auto', extent=[0, np.max(time_interval), 0, nz-2], origin='lower')
+    plt.gca().xaxis.tick_bottom()  # switches x-axis from top to bottom
+    plt.title("Energy(J)")
+    plt.ylabel("Position (m)")
+    plt.xlabel("Time (s)")
+    # ax1.legend(['average velocity:'+ str() + 'm/s'])
+    plt.colorbar(wave_prop_plot, label = '\u221A Energy (\u221AJ)')
+    plt.savefig(folder_dir + '_waveprop_1dz_t' + str(time_limit) + 's.png')
+
+    ###################################################################################################
+    # Plot the 1D projection of energy propagation in the x direction. #
+    ###################################################################################################
+    fig = plt.figure()
+    ax1 = fig.add_subplot(211)
+    wave_prop_plot = ax1.matshow(np.transpose(total_energy_1d_x), aspect='auto', extent=[0, np.max(time_interval), 0, n-2], origin='lower')
+    plt.gca().xaxis.tick_bottom()  # switches x-axis from top to bottom
+    plt.title("Energy(J)")
+    plt.ylabel("Position (m)")
+    plt.xlabel("Time (s)")
+    # ax1.legend(['average velocity:'+ str() + 'm/s'])
+    plt.colorbar(wave_prop_plot, label = '\u221A Energy (\u221AJ)')
+    plt.savefig(folder_dir + '_waveprop_1dx_t' + str(time_limit) + 's.png')
+    ###################################################################################################
+    # Plot the 1D projection of energy propagation in the x direction. #
+    ###################################################################################################
+    fig = plt.figure()
+    ax1 = fig.add_subplot(211)
+    wave_prop_plot = ax1.matshow(np.transpose(total_energy_1d_y), aspect='auto', extent=[0, np.max(time_interval), 0, n-2], origin='lower')
+    plt.gca().xaxis.tick_bottom()  # switches x-axis from top to bottom
+    plt.title("Energy(J)")
+    plt.ylabel("Position (m)")
+    plt.xlabel("Time (s)")
+    # ax1.legend(['average velocity:'+ str() + 'm/s'])
+    plt.colorbar(wave_prop_plot, label = '\u221A Energy (\u221AJ)')
+    plt.savefig(folder_dir + '_waveprop_1dy_t' + str(time_limit) + 's.png')
+    ###################################################################################################
+    # write parameter and hyper parameter tables  #
     ###################################################################################################
     str1 = 'time interval: ' + str(time_limit) + ' s' + '\n'
     str2 = 'average stiffness = ' + str(np.mean(k)) + 'N/m' + '\n'
     str3 = 'average particle mass = ' + str(np.mean(M)) + 'kg' + '\n'
     str4 = 'total mass = ' + str(np.sum(M)) + 'kg' + '\n'
-    str5 = 'mss dimensions = ' + str(n) + ' x ' + str(n) + ' x ' + str(n) + 'particles' + '\n'
+    str5 = 'mss dimensions = ' + str(n) + ' x ' + str(n) + ' x ' + str(nz) + 'particles' + '\n'
     str5 = 'linear damping constant = ' + str(damping_threshold) + ' * ' + str(damping_constant_critical) + ' = ' + str(damping_constant) + '\n'
-    str6 = 'corner mass initial speed = ' + str(initial_velocity) + 'm/s'
+    str6 = 'corner mass initial acceleration = ' + str(initial_velocity) + 'm/s^2'
     L = [str1, str2, str3, str4, str5, str6]
 
     parameter_list = open(folder_dir+"parameter_list_" + date + str(file_index) + ".txt", "w+" )

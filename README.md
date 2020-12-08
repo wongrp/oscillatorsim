@@ -1,2 +1,2 @@
 # A Computational Model for Disordered Solids   
-A 3D simulation of a disordered solid using a particle lattice connected by a harmonic oscillator network with stiffness values chosen from a probability distribution. 
+A 3D harmonic oscillator simulation to model disordered solids, using stiffness values chosen from a probability distribution.
